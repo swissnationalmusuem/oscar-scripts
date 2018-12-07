@@ -121,6 +121,7 @@ function generate_nuds($row, $key, $count){
     				    $doc->text(trim($row['Parent ID']));
 				    $doc->endElement();
 				    $doc->writeElement('publicationStatus', 'approvedSubtype');
+				    $doc->writeElement('maintenanceStatus', 'derived');
 				} else {
 				    //insert a sortID				    
 					if ($key == 'ID'){
@@ -129,15 +130,15 @@ function generate_nuds($row, $key, $count){
 							$doc->text(number_pad(intval($count), 4));
 						$doc->endElement();
 						$doc->writeElement('publicationStatus', 'approved');
+						$doc->writeElement('maintenanceStatus', 'derived');
 					} else {
-						$doc->writeElement('publicationStatus', 'cancelledReplaced');
+						$doc->writeElement('publicationStatus', 'deprecatedType');
+						$doc->writeElement('maintenanceStatus', 'cancelledReplaced');
 					}
-				    
-				    
 				    $count++;
 				}   				
+
 				
-				$doc->writeElement('maintenanceStatus', 'derived');
 				$doc->startElement('maintenanceAgency');
 				    $doc->writeElement('agencyName', 'Swiss National Museum');
 				$doc->endElement();
@@ -193,8 +194,8 @@ function generate_nuds($row, $key, $count){
     				$doc->text('OSCAR ' . str_replace('oscar.', '', $recordId));
     			} elseif ($key == 'DT ID'){
     				$doc->text($row['Divo - Tobler (=DT)'] . ' ' . $row['DT Ref. no.']);
-    			} elseif ($key == 'NMHZ'){
-    				$doc->text($row['NMHZ'] . ' ' . $row['NHMZ Ref. no.']);
+    			} elseif ($key == 'NHMZ ID'){
+    				$doc->text($row['NHMZ'] . ' ' . $row['NHMZ Ref. no.']);
     			}
 			$doc->endElement();
 			
@@ -204,8 +205,8 @@ function generate_nuds($row, $key, $count){
 					$doc->text('OSCAR ' . str_replace('oscar.', '', $recordId));
 				} elseif ($key == 'DT ID'){
 					$doc->text($row['Divo - Tobler (=DT)'] . ' ' . $row['DT Ref. no.']);
-				} elseif ($key == 'NMHZ'){
-					$doc->text($row['NMHZ'] . ' ' . $row['NHMZ Ref. no.']);
+				} elseif ($key == 'NHMZ ID'){
+					$doc->text($row['NHMZ'] . ' ' . $row['NHMZ Ref. no.']);
 				}
 			$doc->endElement();
 			
