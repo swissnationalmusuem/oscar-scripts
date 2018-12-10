@@ -30,7 +30,7 @@ function generate_nuds($row, $key, $count){
 	GLOBAL $deities;
 	GLOBAL $stylesheet;
 	
-	$uri_space = 'http://example.org/oscar/id/';
+	$uri_space = 'http://oscar.nationalmuseum.ch/id/';
 	
 	$recordId = trim($row[$key]);
 	
