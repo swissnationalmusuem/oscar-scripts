@@ -115,7 +115,7 @@ function generate_nuds($row, $key, $count){
 				}
 				
 				//hierarchy
-				if (strlen($row['Parent ID']) > 0){
+				/*if (strlen($row['Parent ID']) > 0){
 				    $doc->startElement('otherRecordId');
     				    $doc->writeAttribute('semantic', 'skos:broader');
     				    $doc->text(trim($row['Parent ID']));
@@ -136,7 +136,21 @@ function generate_nuds($row, $key, $count){
 						$doc->writeElement('maintenanceStatus', 'cancelledReplaced');
 					}
 				    $count++;
-				}   				
+				} */	
+				
+				//insert a sortID
+				if ($key == 'ID'){
+					$doc->startElement('otherRecordId');
+					$doc->writeAttribute('localType', 'sortId');
+					$doc->text(number_pad(intval($count), 4));
+					$doc->endElement();
+					$doc->writeElement('publicationStatus', 'approved');
+					$doc->writeElement('maintenanceStatus', 'derived');
+				} else {
+					$doc->writeElement('publicationStatus', 'deprecatedType');
+					$doc->writeElement('maintenanceStatus', 'cancelledReplaced');
+				}
+				$count++;
 
 				
 				$doc->startElement('maintenanceAgency');
@@ -298,6 +312,11 @@ function generate_nuds($row, $key, $count){
 						$doc->text(trim($row['denomination']));
 					$doc->endElement();
 				}
+				if (strlen($row['denomination 2']) > 0){
+					$doc->startElement('denomination');
+					$doc->text(trim($row['denomination 2']));
+					$doc->endElement();
+				}
 				
 				//manufacture: if the SC no. includes P, it is plated, otherwise struck
 				/*if (strpos($row['SC no.'], 'P') !== FALSE){
@@ -340,7 +359,7 @@ function generate_nuds($row, $key, $count){
 				}
 				
 				//authority
-				if (strlen($row['Issuer URI']) > 0 || strlen($row['authority']) > 0 || strlen($row['ruler']) > 0){
+				if (strlen($row['Issuer URI']) > 0 || strlen($row['state']) > 0 || strlen($row['authority']) > 0){
 					$doc->startElement('authority');
 						/*if (strlen($row['Authority URI']) > 0){
 							$vals = explode('|', $row['Authority URI']);
@@ -367,16 +386,16 @@ function generate_nuds($row, $key, $count){
 								$doc->endElement();
 							}
 						}*/
-						if (strlen($row['authority']) > 0){
+						if (strlen($row['state']) > 0){
 							$doc->startElement('corpname');
-								$doc->writeAttribute('xlink:role', 'authority');
-								$doc->text(trim($row['authority']));
+								$doc->writeAttribute('xlink:role', 'state');
+								$doc->text(trim($row['state']));
 							$doc->endElement();
 						}
-						if (strlen($row['ruler']) > 0){
+						if (strlen($row['authority']) > 0){
 							$doc->startElement('persname');
 								$doc->writeAttribute('xlink:role', 'authority');
-								$doc->text(trim($row['ruler']));
+								$doc->text(trim($row['authority']));
 							$doc->endElement();
 						}
 					
@@ -540,7 +559,7 @@ function generate_nuds($row, $key, $count){
 						if (strlen($row['DT ID']) > 0){
 							$doc->startElement('reference');
 								$doc->writeAttribute('xlink:type', 'simple');
-								$doc->writeAttribute('xlink:href', $uri_space . $row['NHMZ ID']);
+								$doc->writeAttribute('xlink:href', $uri_space . $row['DT ID']);
 								$doc->startElement('tei:title');
 									$doc->writeAttribute('key', 'http://nomisma.org/id/divo-tobler');
 									$doc->text('Divo - Tobler (=DT)');
