@@ -1,11 +1,11 @@
 <?php 
  /*****
  * Author: Ethan Gruber
- * Date: December 2018
- * Function: Process the OSCAR spreadsheet into three sets of NUDS documents
+ * Date: January 2021
+ * Function: Process the OSCAR spreadsheet into NUDS document
  *****/
 
-$data = generate_json('https://docs.google.com/spreadsheets/d/e/2PACX-1vSXfF6zZil4UsAOycPzNNfCmjOTGPoN8N7zTUAZIk2QtjZ6O3nKuQrwTdO68EJlJ5vtou7IOmvO8t7K/pub?output=csv');
+$data = generate_json('https://docs.google.com/spreadsheets/d/e/2PACX-1vRkGPpZKs3oCtsL6nchfA8tvoRs-tk2MJO9SZfigq7_R3zCAbHQ0N2bkqDLqwo8rxDExH0Oy6PcmJfW/pub?output=csv');
 
 $nomismaUris = array();
 //$records = array();
@@ -14,25 +14,17 @@ $count = 1;
 foreach($data as $row){
 	
 	//process OSCAR first	
-	generate_nuds($row, 'ID', $count);
-	if (strlen($row['DT ID']) > 0){
-		generate_nuds($row, 'DT ID', 0);
-	}
-	if (strlen($row['NHMZ ID']) > 0){
-		generate_nuds($row, 'NHMZ ID', 0);
-	}
+	generate_nuds($row, $count);
 	
 	$count++;
 }
 
 //functions
-function generate_nuds($row, $key, $count){
-	GLOBAL $deities;
-	GLOBAL $stylesheet;
+function generate_nuds($row, $count){
 	
 	$uri_space = 'http://oscar.nationalmuseum.ch/id/';
 	
-	$recordId = trim($row[$key]);
+	$recordId = trim($row['ID']);
 	
 	
 	if (strlen($recordId) > 0){
@@ -61,96 +53,42 @@ function generate_nuds($row, $key, $count){
 				$doc->writeElement('recordId', $recordId);
 				
 				//concordances with other published corpora
-				if ($key == 'ID'){
-					if (strlen($row['DT ID']) > 0){
-						$doc->startElement('otherRecordId');
-	    				    $doc->writeAttribute('semantic', 'dcterms:replaces');
-	    				    $doc->text(trim($row['DT ID']));
-	    				$doc->endElement();
-	    				$doc->startElement('otherRecordId');
-	    				    $doc->writeAttribute('semantic', 'skos:exactMatch');
-	    				    $doc->text($uri_space . trim($row['DT ID']));
-					    $doc->endElement();
-					}
-					if (strlen($row['NHMZ ID']) > 0){
-						$doc->startElement('otherRecordId');
-							$doc->writeAttribute('semantic', 'dcterms:replaces');
-							$doc->text(trim($row['NHMZ ID']));
-						$doc->endElement();
-						$doc->startElement('otherRecordId');
-							$doc->writeAttribute('semantic', 'skos:exactMatch');
-							$doc->text($uri_space . trim($row['NHMZ ID']));
-						$doc->endElement();
-					}
-				} elseif ($key == 'DT ID'){
-					$doc->startElement('otherRecordId');
-						$doc->writeAttribute('semantic', 'dcterms:isReplacedBy');
-						$doc->text(trim($row['ID']));
-					$doc->endElement();
-					$doc->startElement('otherRecordId');
-						$doc->writeAttribute('semantic', 'skos:exactMatch');
-						$doc->text($uri_space . trim($row['ID']));
-					$doc->endElement();
-					if (strlen($row['NHMZ ID']) > 0){
-						$doc->startElement('otherRecordId');
-							$doc->writeAttribute('semantic', 'skos:exactMatch');
-							$doc->text($uri_space . trim($row['NHMZ ID']));
-						$doc->endElement();
-					}
-				} elseif ($key == 'NHMZ ID'){
-					$doc->startElement('otherRecordId');
-						$doc->writeAttribute('semantic', 'dcterms:isReplacedBy');
-						$doc->text(trim($row['ID']));
-					$doc->endElement();
-					$doc->startElement('otherRecordId');
-						$doc->writeAttribute('semantic', 'skos:exactMatch');
-						$doc->text($uri_space . trim($row['ID']));
-					$doc->endElement();
-					if (strlen($row['DT ID']) > 0){
-						$doc->startElement('otherRecordId');
-							$doc->writeAttribute('semantic', 'skos:exactMatch');
-							$doc->text($uri_space . trim($row['DT ID']));
-						$doc->endElement();
-					}
+				if (strlen($row['DT ID']) > 0){
+				    $pieces = explode('|', $row['DT ID']);
+			        foreach ($pieces as $id){
+			            $doc->startElement('otherRecordId');
+				            $doc->writeAttribute('semantic', 'dcterms:replaces');
+				            $doc->text($id);
+			            $doc->endElement();
+			            $doc->startElement('otherRecordId');
+				            $doc->writeAttribute('semantic', 'skos:exactMatch');
+				            $doc->text($uri_space . $id);
+			            $doc->endElement();
+				    }
 				}
 				
-				//hierarchy
-				/*if (strlen($row['Parent ID']) > 0){
-				    $doc->startElement('otherRecordId');
-    				    $doc->writeAttribute('semantic', 'skos:broader');
-    				    $doc->text(trim($row['Parent ID']));
-				    $doc->endElement();
-				    $doc->writeElement('publicationStatus', 'approvedSubtype');
-				    $doc->writeElement('maintenanceStatus', 'derived');
-				} else {
-				    //insert a sortID				    
-					if ($key == 'ID'){
-						$doc->startElement('otherRecordId');
-							$doc->writeAttribute('localType', 'sortId');
-							$doc->text(number_pad(intval($count), 4));
-						$doc->endElement();
-						$doc->writeElement('publicationStatus', 'approved');
-						$doc->writeElement('maintenanceStatus', 'derived');
-					} else {
-						$doc->writeElement('publicationStatus', 'deprecatedType');
-						$doc->writeElement('maintenanceStatus', 'cancelledReplaced');
-					}
-				    $count++;
-				} */	
+				if (strlen($row['NHMZ ID']) > 0){
+				    $pieces = explode('|', $row['NHMZ ID']);
+				    foreach ($pieces as $id){
+				        $doc->startElement('otherRecordId');
+    				        $doc->writeAttribute('semantic', 'dcterms:replaces');
+    				        $doc->text($id);
+				        $doc->endElement();
+				        $doc->startElement('otherRecordId');
+    				        $doc->writeAttribute('semantic', 'skos:exactMatch');
+    				        $doc->text($uri_space . $id);
+				        $doc->endElement();
+				    }
+				}
 				
 				//insert a sortID
-				if ($key == 'ID'){
-					$doc->startElement('otherRecordId');
-					$doc->writeAttribute('localType', 'sortId');
-					$doc->text(number_pad(intval($count), 4));
-					$doc->endElement();
-					$doc->writeElement('publicationStatus', 'approved');
-					$doc->writeElement('maintenanceStatus', 'derived');
-				} else {
-					$doc->writeElement('publicationStatus', 'deprecatedType');
-					$doc->writeElement('maintenanceStatus', 'cancelledReplaced');
-				}
-				$count++;
+				$doc->startElement('otherRecordId');
+    				$doc->writeAttribute('localType', 'sortId');
+    				$doc->text(number_pad(intval($count), 5));
+				$doc->endElement();
+				
+				$doc->writeElement('publicationStatus', 'approved');
+				$doc->writeElement('maintenanceStatus', 'derived');
 
 				
 				$doc->startElement('maintenanceAgency');
@@ -177,6 +115,7 @@ function generate_nuds($row, $key, $count){
 					$doc->startElement('license');
 						$doc->writeAttribute('xlink:type', 'simple');
 						$doc->writeAttribute('xlink:href', 'http://opendatacommons.org/licenses/odbl/');
+						$doc->writeAttribute('for', 'data');
 					$doc->endElement();
 				$doc->endElement();
 				
@@ -204,28 +143,16 @@ function generate_nuds($row, $key, $count){
 			//title: English and German
 			$doc->startElement('title');
     			$doc->writeAttribute('xml:lang', 'en');
-    			if ($key == 'ID'){
-    				$doc->text('OSCAR ' . str_replace('oscar.', '', $recordId));
-    			} elseif ($key == 'DT ID'){
-    				$doc->text($row['Divo - Tobler (=DT)'] . ' ' . $row['DT Ref. no.']);
-    			} elseif ($key == 'NHMZ ID'){
-    				$doc->text($row['NHMZ'] . ' ' . $row['NHMZ Ref. no.']);
-    			}
+    			$doc->text('OSCAR ' . str_replace('oscar.', '', $recordId));
 			$doc->endElement();
 			
 			$doc->startElement('title');
 				$doc->writeAttribute('xml:lang', 'de');
-				if ($key == 'ID'){
-					$doc->text('OSCAR ' . str_replace('oscar.', '', $recordId));
-				} elseif ($key == 'DT ID'){
-					$doc->text($row['Divo - Tobler (=DT)'] . ' ' . $row['DT Ref. no.']);
-				} elseif ($key == 'NHMZ ID'){
-					$doc->text($row['NHMZ'] . ' ' . $row['NHMZ Ref. no.']);
-				}
+				$doc->text('OSCAR ' . str_replace('oscar.', '', $recordId));
 			$doc->endElement();
 			
 			/***** NOTES *****/
-			if (strlen(trim($row['Variationen der Darstellung'])) > 0 || strlen(trim($row['remarks'])) > 0){
+			if (strlen(trim($row['Variationen der Darstellung'])) > 0 || strlen(trim($row['notes (Bemerkungen)'])) > 0){
 				$doc->startElement('noteSet');
 				if (strlen(trim($row['Variationen der Darstellung'])) > 0){
 					$doc->startElement('note');
@@ -233,10 +160,10 @@ function generate_nuds($row, $key, $count){
 						$doc->text(trim($row['Variationen der Darstellung']));
 					$doc->endElement();
 				}
-				if (strlen(trim($row['remarks'])) > 0){
+				if (strlen(trim($row['notes (Bemerkungen)'])) > 0){
 					$doc->startElement('note');
 						$doc->writeAttribute('xml:lang', 'de');
-						$doc->text(trim($row['remarks']));
+						$doc->text(trim($row['notes (Bemerkungen)']));
 					$doc->endElement();
 				}
 				$doc->endElement();
@@ -314,7 +241,7 @@ function generate_nuds($row, $key, $count){
 				}
 				if (strlen($row['denomination 2']) > 0){
 					$doc->startElement('denomination');
-					$doc->text(trim($row['denomination 2']));
+					   $doc->text(trim($row['denomination 2']));
 					$doc->endElement();
 				}
 				
@@ -359,7 +286,7 @@ function generate_nuds($row, $key, $count){
 				}
 				
 				//authority
-				if (strlen($row['Issuer URI']) > 0 || strlen($row['state']) > 0 || strlen($row['authority']) > 0){
+				if (strlen($row['mintmaster']) > 0 || strlen($row['mintmaster 2']) > 0 || strlen($row['ruler']) > 0 || strlen($row['state']) > 0){
 					$doc->startElement('authority');
 						/*if (strlen($row['Authority URI']) > 0){
 							$vals = explode('|', $row['Authority URI']);
@@ -386,77 +313,66 @@ function generate_nuds($row, $key, $count){
 								$doc->endElement();
 							}
 						}*/
+					
+    					if (strlen($row['ruler']) > 0){
+    					    $doc->startElement('persname');
+        					    $doc->writeAttribute('xlink:role', 'ruler');
+        					    $doc->text(trim($row['ruler']));
+    					    $doc->endElement();
+    					}
 						if (strlen($row['state']) > 0){
 							$doc->startElement('corpname');
 								$doc->writeAttribute('xlink:role', 'state');
 								$doc->text(trim($row['state']));
 							$doc->endElement();
 						}
-						if (strlen($row['authority']) > 0){
-							$doc->startElement('persname');
-								$doc->writeAttribute('xlink:role', 'authority');
-								$doc->text(trim($row['authority']));
-							$doc->endElement();
+						if (strlen($row['mintmaster']) > 0){
+						    $doc->startElement('persname');
+    						    $doc->writeAttribute('xlink:role', 'issuer');
+    						    $doc->text(trim($row['mintmaster']));
+						    $doc->endElement();
 						}
-					
-					
-						if (strlen($row['Issuer URI']) > 0){
-							$vals = explode('|', $row['Issuer URI']);
-							foreach ($vals as $val){
-								if (substr($val, -1) == '?'){
-									$uri = substr($val, 0, -1);
-									$uncertainty = true;
-									$content = processUri($uri);
-								} else {
-									$uri =  $val;
-									$uncertainty = false;
-									$content = processUri($uri);
-								}
-								$role = 'issuer';
-								
-								$doc->startElement($content['element']);
-									$doc->writeAttribute('xlink:type', 'simple');
-									$doc->writeAttribute('xlink:role', $role);
-									$doc->writeAttribute('xlink:href', $uri);
-									if($uncertainty == true){
-										$doc->writeAttribute('certainty', 'uncertain');
-									}
-									$doc->text($content['label']);
-								$doc->endElement();
-							}
+						if (strlen($row['mintmaster 2']) > 0){
+						    $doc->startElement('persname');
+    						    $doc->writeAttribute('xlink:role', 'issuer');
+    						    $doc->text(trim($row['mintmaster 2']));
+						    $doc->endElement();
 						}
+						
 					$doc->endElement();
 				}
 				
 				//geography:mint
-				if (strlen($row['Mint URI']) > 0){
-					$doc->startElement('geographic');
-					$vals = explode('|', $row['Mint URI']);
-					foreach ($vals as $val){
-						if (substr($val, -1) == '?'){
-							$uri = substr($val, 0, -1);
-							$uncertainty = true;
-							$content = processUri($uri);
-						} else {
-							$uri =  $val;
-							$uncertainty = false;
-							$content = processUri($uri);
-						}
-						
-						$doc->startElement('geogname');
-							$doc->writeAttribute('xlink:type', 'simple');
-							$doc->writeAttribute('xlink:role', 'mint');
-							$doc->writeAttribute('xlink:href', $uri);
-							if(isset($uncertainty)){
-								$doc->writeAttribute('certainty', $uncertainty);
-							}
-							$doc->text($content['label']);
-						$doc->endElement();
-						
-						unset($uncertainty);
-					}
-					$doc->endElement();
+				if (strlen($row['mint 1 URI']) > 0){
+				    $doc->startElement('geographic');
+				    if (strlen($row['mint 1 URI']) > 0){
+				        $content = processUri($row['mint 1 URI']);
+				        $doc->startElement('geogname');
+    				        $doc->writeAttribute('xlink:type', 'simple');
+    				        $doc->writeAttribute('xlink:role', 'mint');
+    				        $doc->writeAttribute('xlink:href', $row['mint 1 URI']);
+    				        if ($row['mint uncertain'] == "TRUE"){
+    				            $doc->writeAttribute('certainty', 'http://nomisma.org/id/uncertain_value');
+    				        }
+    				        $doc->text($content['label']);
+				        $doc->endElement();
+				    }
+				    if (strlen($row['mint 2 URI']) > 0){
+				        $content = processUri($row['mint 2 URI']);
+				        $doc->startElement('geogname');
+    				        $doc->writeAttribute('xlink:type', 'simple');
+    				        $doc->writeAttribute('xlink:role', 'mint');
+    				        $doc->writeAttribute('xlink:href', $row['mint 2 URI']);
+    				        if ($row['mint uncertain'] == "TRUE"){
+    				            $doc->writeAttribute('certainty', 'http://nomisma.org/id/uncertain_value');
+    				        }
+    				        $doc->text($content['label']);
+				        $doc->endElement();				        
+				    }
+				    $doc->endElement();
 				}
+				
+				
 				
 				//obverse
 				if (strlen($row['obverse type']) > 0 || strlen($row['obverse legend']) > 0){
@@ -483,10 +399,15 @@ function generate_nuds($row, $key, $count){
 								$doc->endElement();
 							$doc->endElement();	
     					}
+    					
+    					if (strlen($row['portrait']) > 0){
+    					    $doc->startElement('persname');
+        					    $doc->writeAttribute('xlink:role', 'portrait');
+        					    $doc->text(trim($row['portrait']));
+    					    $doc->endElement();
+    					}
 					//end obverse
 					$doc->endElement();
-				} else {
-					echo "Error: no obverse code for {$recordId}/\n";
 				}
 				
 				//reverse
@@ -516,59 +437,74 @@ function generate_nuds($row, $key, $count){
 					}
 					//end obverse
 					$doc->endElement();
-				} else {
-					echo "Error: no obverse code for {$recordId}/\n";
+				}
+				
+				if (strlen($row['rim (edge)']) > 0){
+				    $doc->startElement('edge');
+				        $doc->startElement('description');
+				            $doc->writeAttribute('xml:lang', 'de');
+				            $doc->text($row['rim (edge)']);				            
+				        $doc->endElement();
+				    $doc->endElement();
 				}
 				
 				//Type Series should be explicit
 				$doc->startElement('typeSeries');
 					$doc->writeAttribute('xlink:type', 'simple');
-					if ($key == 'ID'){
-						$doc->writeAttribute('xlink:href', 'http://nomisma.org/id/oscar');
-						$doc->text('OSCAR');
-					}
-					if ($key == 'DT ID'){
-						$doc->writeAttribute('xlink:href', 'http://nomisma.org/id/divo-tobler');
-						$doc->text('Divo - Tobler (Die Münzen der Schweiz)');
-					}
-					if ($key == 'NHMZ ID'){
-						$doc->writeAttribute('xlink:href', 'http://nomisma.org/id/nhmz');
-						$doc->text('NHMZ (Der neue HMZ-Katalog)');
-					}
+					$doc->writeAttribute('xlink:href', 'http://nomisma.org/id/oscar');
+					$doc->text('OSCAR');
 				$doc->endElement();
 				
 				//end typeDesc
 				$doc->endElement();
 				
 				/***** REFDESC *****/
-				if ($key == 'ID' && (strlen($row['DT ID']) > 0 || strlen($row['NHMZ ID']) > 0)){
+				if (strlen($row['DT ID']) > 0 || strlen($row['NHMZ ID']) > 0 || strlen($row['Ref3']) > 0 || strlen($row['Ref4']) > 0){
 					$doc->startElement('refDesc');
-						if (strlen($row['NHMZ ID']) > 0){
-							$doc->startElement('reference');
-								$doc->writeAttribute('xlink:type', 'simple');
-								$doc->writeAttribute('xlink:href', $uri_space . $row['NHMZ ID']);
-								$doc->startElement('tei:title');
-									$doc->writeAttribute('key', 'http://nomisma.org/id/nhmz');
-									$doc->text($row['NHMZ']);
-								$doc->endElement();
-								$doc->startElement('tei:idno');
-									$doc->text($row['NHMZ Ref. no.']);
-								$doc->endElement();
-							$doc->endElement();
-						}
-						if (strlen($row['DT ID']) > 0){
-							$doc->startElement('reference');
-								$doc->writeAttribute('xlink:type', 'simple');
-								$doc->writeAttribute('xlink:href', $uri_space . $row['DT ID']);
-								$doc->startElement('tei:title');
-									$doc->writeAttribute('key', 'http://nomisma.org/id/divo-tobler');
-									$doc->text('Divo - Tobler (=DT)');
-								$doc->endElement();
-								$doc->startElement('tei:idno');
-									$doc->text($row['DT Ref. no.']);
-								$doc->endElement();
-							$doc->endElement();
-						}
+    					if (strlen($row['DT ID']) > 0){
+    					    $pieces = explode('|', $row['DT ID']);
+    					    foreach ($pieces as $id){
+    					        $num = explode('.', $id);
+    					        
+    					        $doc->startElement('reference');
+        					        $doc->writeAttribute('xlink:type', 'simple');
+        					        $doc->writeAttribute('xlink:href', $uri_space . $id);
+        					        $doc->startElement('tei:title');
+            					        $doc->writeAttribute('key', 'http://nomisma.org/id/divo-tobler');
+            					        $doc->text($row['Divo - Tobler (=DT)']);
+        					        $doc->endElement();
+        					        $doc->startElement('tei:idno');
+        					           $doc->text($num[2]);
+        					        $doc->endElement();
+    					        $doc->endElement();
+    					    }
+    					}
+    					
+    					if (strlen($row['NHMZ ID']) > 0){
+    					    $pieces = explode('|', $row['NHMZ ID']);
+    					    foreach ($pieces as $id){
+    					        $num = explode('-', $id);
+    					        
+    					        $doc->startElement('reference');
+        					        $doc->writeAttribute('xlink:type', 'simple');
+        					        $doc->writeAttribute('xlink:href', $uri_space . $id);
+        					        $doc->startElement('tei:title');
+            					        $doc->writeAttribute('key', 'http://nomisma.org/id/nhmz');
+            					        $doc->text($row['NHMZ']);
+            					    $doc->endElement();
+            					    $doc->startElement('tei:idno');
+            					       $doc->text($num[1]);
+        					        $doc->endElement();
+    					        $doc->endElement();
+    					    }
+    					}
+    					
+    					if (strlen($row['Ref3']) > 0){
+    					    construct_ref($doc, $row['Ref3'], $row['Ref3 Seite(n)'], $row['Ref3 Nr']);
+    					}
+    					if (strlen($row['Ref4']) > 0){
+    					    construct_ref($doc, $row['Ref4'], $row['Ref4 Seite(n)'], $row['Ref4 Nr']);
+    					}
 					$doc->endElement();
 				}
 				
@@ -585,6 +521,23 @@ function generate_nuds($row, $key, $count){
 
 
  /***** FUNCTIONS *****/
+function construct_ref($doc, $ref, $page, $num){
+    $doc->startElement('reference');
+        $doc->startElement('tei:title');
+            $doc->text(trim($ref));
+        $doc->endElement();
+        if (strlen($page) > 0){
+            $doc->text(' ' . $page . ', Nr ');
+        }
+        if (strlen($num) > 0){
+            $doc->startElement('tei:idno');
+                $doc->text(trim($num));
+            $doc->endElement();
+        }
+
+    $doc->endElement();
+}
+
 function processUri($uri){
 	GLOBAL $nomismaUris;
 	$content = array();
@@ -696,9 +649,6 @@ function get_date_textual($year){
     if($year < 0){
         $textual_date .= abs($year) . ' BC';
     } elseif ($year > 0) {
-        if ($year <= 600){
-            $textual_date .= 'AD ';
-        }
         $textual_date .= $year;
     }
     return $textual_date;
