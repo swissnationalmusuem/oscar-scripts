@@ -180,7 +180,7 @@ function generate_nuds($recordId, $array, $key){
 			            break;
 			    }
 			    
-			    $title = $vol . ' ' . $pieces[1];
+			    $title = $vol . ' ' . str_replace('nhmz.', '', $recordId);
 			}
 			
 			//title: English and German

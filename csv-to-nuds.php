@@ -483,17 +483,17 @@ function generate_nuds($row, $count){
     					if (strlen($row['NHMZ ID']) > 0){
     					    $pieces = explode('|', $row['NHMZ ID']);
     					    foreach ($pieces as $id){
-    					        $num = explode('-', $id);
+    					        $num = str_replace('nhmz.', '', $id);
     					        
     					        $doc->startElement('reference');
         					        $doc->writeAttribute('xlink:type', 'simple');
         					        $doc->writeAttribute('xlink:href', $uri_space . $id);
         					        $doc->startElement('tei:title');
             					        $doc->writeAttribute('key', 'http://nomisma.org/id/nhmz');
-            					        $doc->text($row['NHMZ']);
+            					        $doc->text('NHMZ');
             					    $doc->endElement();
             					    $doc->startElement('tei:idno');
-            					       $doc->text($num[1]);
+            					       $doc->text($num);
         					        $doc->endElement();
     					        $doc->endElement();
     					    }
